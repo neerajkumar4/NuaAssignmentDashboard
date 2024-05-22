@@ -1,20 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, TableSortLabel, Paper, Button, Box } from '@mui/material';
-import { fetchBooks, fetchAuthorDetails } from '../services/api';
+import React, { useState, useEffect } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  TableSortLabel,
+  Paper,
+  Button,
+  Box,
+} from "@mui/material";
+import { fetchBooks, fetchAuthorDetails } from "../services/api";
 
 const BookTable = () => {
   const [books, setBooks] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [order, setOrder] = useState('asc');
-  const [orderBy, setOrderBy] = useState('title');
+  const [order, setOrder] = useState("asc");
+  const [orderBy, setOrderBy] = useState("title");
 
   useEffect(() => {
     loadBooks();
   }, [page, rowsPerPage, order, orderBy]);
 
   const loadBooks = async () => {
-    const data = await fetchBooks('subject:fiction', page + 1, rowsPerPage);
+    const data = await fetchBooks("subject:fiction", page + 1, rowsPerPage);
     const booksWithAuthors = await Promise.all(
       data.docs.map(async (book) => {
         if (book.author_key && book.author_key.length > 0) {
@@ -33,8 +45,8 @@ const BookTable = () => {
   };
 
   const handleRequestSort = (property) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
 
@@ -47,10 +59,47 @@ const BookTable = () => {
     setPage(0);
   };
 
-  
+  const convertToCSV = (data) => {
+    const headers = ['ratings_average', 'author_name', 'title', 'first_publish_year', 'subject', 'author_birth_date', 'author_top_work'];
+    const csvRows = [];
+
+    // Add headers
+    csvRows.push(headers.join(','));
+
+    // Add data rows
+    data.forEach(book => {
+      const row = headers.map(header => {
+        const value = book[header];
+        return value ? `"${value.toString().replace(/"/g, '""')}"` : '';
+      }).join(',');
+      csvRows.push(row);
+    });
+
+    return csvRows.join('\n');
+  };
+  const handleDownloadCSV = () => {
+    const csvData = convertToCSV(books);
+    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute("download", "books.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <Paper>
-      <Box display="flex" justifyContent="space-between" alignItems="center" p={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        p={2}
+      >
+        <Button variant="contained" color="primary" onClick={handleDownloadCSV}>
+          Download CSV
+        </Button>
       </Box>
       <TableContainer>
         <Table>
@@ -58,36 +107,36 @@ const BookTable = () => {
             <TableRow>
               <TableCell>
                 <TableSortLabel
-                  active={orderBy === 'ratings_average'}
-                  direction={orderBy === 'ratings_average' ? order : 'asc'}
-                  onClick={() => handleRequestSort('ratings_average')}
+                  active={orderBy === "ratings_average"}
+                  direction={orderBy === "ratings_average" ? order : "asc"}
+                  onClick={() => handleRequestSort("ratings_average")}
                 >
                   Ratings Average
                 </TableSortLabel>
               </TableCell>
               <TableCell>
                 <TableSortLabel
-                  active={orderBy === 'author_name'}
-                  direction={orderBy === 'author_name' ? order : 'asc'}
-                  onClick={() => handleRequestSort('author_name')}
+                  active={orderBy === "author_name"}
+                  direction={orderBy === "author_name" ? order : "asc"}
+                  onClick={() => handleRequestSort("author_name")}
                 >
                   Author Name
                 </TableSortLabel>
               </TableCell>
               <TableCell>
                 <TableSortLabel
-                  active={orderBy === 'title'}
-                  direction={orderBy === 'title' ? order : 'asc'}
-                  onClick={() => handleRequestSort('title')}
+                  active={orderBy === "title"}
+                  direction={orderBy === "title" ? order : "asc"}
+                  onClick={() => handleRequestSort("title")}
                 >
                   Title
                 </TableSortLabel>
               </TableCell>
               <TableCell>
                 <TableSortLabel
-                  active={orderBy === 'first_publish_year'}
-                  direction={orderBy === 'first_publish_year' ? order : 'asc'}
-                  onClick={() => handleRequestSort('first_publish_year')}
+                  active={orderBy === "first_publish_year"}
+                  direction={orderBy === "first_publish_year" ? order : "asc"}
+                  onClick={() => handleRequestSort("first_publish_year")}
                 >
                   First Publish Year
                 </TableSortLabel>
@@ -104,7 +153,7 @@ const BookTable = () => {
                 <TableCell>{book.author_name}</TableCell>
                 <TableCell>{book.title}</TableCell>
                 <TableCell>{book.first_publish_year}</TableCell>
-                <TableCell>{book.subject?.join(', ')}</TableCell>
+                <TableCell>{book.subject?.join(", ")}</TableCell>
                 <TableCell>{book.author_birth_date}</TableCell>
                 <TableCell>{book.author_top_work}</TableCell>
               </TableRow>

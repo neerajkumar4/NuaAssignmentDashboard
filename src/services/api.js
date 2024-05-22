@@ -17,3 +17,8 @@ export const fetchBookDetails = async (bookId) => {
   const response = await axios.get(`${BASE_URL}/works/${bookId}.json`);
   return response.data;
 };
+
+export const fetchAuthorDetails = async (authorKey) => {
+    const response = await axios.get(`${BASE_URL}/authors/${authorKey}.json`);
+    return response.data;
+  };

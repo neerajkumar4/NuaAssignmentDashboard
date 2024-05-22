@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, TableSortLabel, Paper } from '@mui/material';
-import { fetchBooks } from '../services/api';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination, TableSortLabel, Paper, Button, Box } from '@mui/material';
+import { fetchBooks, fetchAuthorDetails } from '../services/api';
 
 const BookTable = () => {
   const [books, setBooks] = useState([]);
@@ -15,7 +15,21 @@ const BookTable = () => {
 
   const loadBooks = async () => {
     const data = await fetchBooks('subject:fiction', page + 1, rowsPerPage);
-    setBooks(data.docs);
+    const booksWithAuthors = await Promise.all(
+      data.docs.map(async (book) => {
+        if (book.author_key && book.author_key.length > 0) {
+          const authorDetails = await fetchAuthorDetails(book.author_key[0]);
+          return {
+            ...book,
+            author_name: authorDetails.name,
+            author_birth_date: authorDetails.birth_date,
+            author_top_work: authorDetails.top_work,
+          };
+        }
+        return book;
+      })
+    );
+    setBooks(booksWithAuthors);
   };
 
   const handleRequestSort = (property) => {
@@ -33,8 +47,11 @@ const BookTable = () => {
     setPage(0);
   };
 
+  
   return (
     <Paper>
+      <Box display="flex" justifyContent="space-between" alignItems="center" p={2}>
+      </Box>
       <TableContainer>
         <Table>
           <TableHead>
@@ -87,7 +104,7 @@ const BookTable = () => {
                 <TableCell>{book.author_name}</TableCell>
                 <TableCell>{book.title}</TableCell>
                 <TableCell>{book.first_publish_year}</TableCell>
-                <TableCell>{book.subject}</TableCell>
+                <TableCell>{book.subject?.join(', ')}</TableCell>
                 <TableCell>{book.author_birth_date}</TableCell>
                 <TableCell>{book.author_top_work}</TableCell>
               </TableRow>
